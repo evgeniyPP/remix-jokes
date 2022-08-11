@@ -1,39 +1,100 @@
 import type { ActionFunction } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
+import { useActionData } from '@remix-run/react';
 
 import { db } from '~/utils/db.server';
 
-export let action: ActionFunction = async ({ request }) => {
+function validateJokeName(name: string) {
+  if (name.length < 3) {
+    return `That joke's name is too short`;
+  }
+}
+
+function validateJokeContent(name: string) {
+  if (name.length < 10) {
+    return `That joke is too short`;
+  }
+}
+
+type ActionData = {
+  formError?: string;
+  fieldErrors?: { name: string | undefined; content: string | undefined };
+  fields?: { name: string; content: string };
+};
+
+const badRequest = (data: ActionData) => json(data, { status: 400 });
+
+export let action: ActionFunction = async ({ request }): Promise<Response | ActionData> => {
   const formData = await request.formData();
   const name = formData.get('name');
   const content = formData.get('content');
 
   if (typeof name !== 'string' || typeof content !== 'string') {
-    throw new Error('Invalid form data');
+    return badRequest({
+      formError: `Form not submitted correctly.`
+    });
   }
 
-  const joke = await db.joke.create({
-    data: { name, content }
-  });
+  const fieldErrors = {
+    name: validateJokeName(name),
+    content: validateJokeContent(content)
+  };
+  const fields = { name, content };
+
+  if (Object.values(fieldErrors).some(Boolean)) {
+    return badRequest({ fieldErrors, fields });
+  }
+
+  const joke = await db.joke.create({ data: fields });
   return redirect(`/jokes/${joke.id}`);
 };
 
 export default function NewJokeRoute() {
+  const actionData = useActionData<ActionData>();
+
   return (
     <div>
       <p>Add your own hilarious joke</p>
       <form method="post">
         <div>
           <label>
-            Name: <input type="text" name="name" />
+            Name:{' '}
+            <input
+              type="text"
+              defaultValue={actionData?.fields?.name}
+              name="name"
+              aria-invalid={Boolean(actionData?.fieldErrors?.name) || undefined}
+              aria-errormessage={actionData?.fieldErrors?.name ? 'name-error' : undefined}
+            />
           </label>
+          {actionData?.fieldErrors?.name ? (
+            <p className="form-validation-error" role="alert" id="name-error">
+              {actionData.fieldErrors.name}
+            </p>
+          ) : null}
         </div>
         <div>
           <label>
-            Content: <textarea name="content" />
+            Content:{' '}
+            <textarea
+              defaultValue={actionData?.fields?.content}
+              name="content"
+              aria-invalid={Boolean(actionData?.fieldErrors?.content) || undefined}
+              aria-errormessage={actionData?.fieldErrors?.content ? 'content-error' : undefined}
+            />
           </label>
+          {actionData?.fieldErrors?.content ? (
+            <p className="form-validation-error" role="alert" id="content-error">
+              {actionData.fieldErrors.content}
+            </p>
+          ) : null}
         </div>
         <div>
+          {actionData?.formError ? (
+            <p className="form-validation-error" role="alert">
+              {actionData.formError}
+            </p>
+          ) : null}
           <button type="submit" className="button">
             Add
           </button>

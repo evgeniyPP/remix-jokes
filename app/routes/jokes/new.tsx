@@ -1,6 +1,6 @@
 import type { ActionFunction, LoaderFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
-import { Link, useActionData, useCatch } from '@remix-run/react';
+import { Form, Link, useActionData, useCatch } from '@remix-run/react';
 
 import { db } from '~/utils/db.server';
 import { getUserId, requireUserId } from '~/utils/session.server';
@@ -67,7 +67,7 @@ export default function NewJokeRoute() {
   return (
     <div>
       <p>Add your own hilarious joke</p>
-      <form method="post">
+      <Form method="post">
         <div>
           <label>
             Name:{' '}
@@ -111,7 +111,7 @@ export default function NewJokeRoute() {
             Add
           </button>
         </div>
-      </form>
+      </Form>
     </div>
   );
 }
@@ -123,7 +123,9 @@ export function CatchBoundary() {
     return (
       <div className="error-container">
         <p>You must be logged in to create a joke.</p>
-        <Link to="/login">Login</Link>
+        <Link to="/login" prefetch="intent">
+          Login
+        </Link>
       </div>
     );
   }

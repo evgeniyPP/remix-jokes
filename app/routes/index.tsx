@@ -22,7 +22,9 @@ export default function IndexRoute() {
         <nav>
           <ul>
             <li>
-              <Link to="jokes">Read Jokes</Link>
+              <Link to="jokes" prefetch="intent">
+                Read Jokes
+              </Link>
             </li>
             <li>
               <Link to="jokes.rss">Get RSS</Link>

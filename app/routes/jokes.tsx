@@ -1,6 +1,6 @@
 import type { LinksFunction, LoaderFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { Outlet, Link, useLoaderData } from '@remix-run/react';
+import { Outlet, Link, useLoaderData, Form } from '@remix-run/react';
 import type { Joke } from '@prisma/client';
 
 import { db } from '~/utils/db.server';
@@ -36,7 +36,7 @@ export default function JokesRoute() {
       <header className="jokes-header">
         <div className="container">
           <h1 className="home-link">
-            <Link to="/" title="Remix Jokes" aria-label="Remix Jokes">
+            <Link to="/" title="Remix Jokes" aria-label="Remix Jokes" prefetch="intent">
               <span className="logo">🤪</span>
               <span className="logo-medium">J🤪KES</span>
             </Link>
@@ -44,14 +44,16 @@ export default function JokesRoute() {
           {data.user ? (
             <div className="user-info">
               <span>{`Hi ${data.user.username}`}</span>
-              <form action="/logout" method="post">
+              <Form action="/logout" method="post">
                 <button type="submit" className="button">
                   Logout
                 </button>
-              </form>
+              </Form>
             </div>
           ) : (
-            <Link to="/login">Login</Link>
+            <Link to="/login" prefetch="intent">
+              Login
+            </Link>
           )}
         </div>
       </header>
@@ -63,11 +65,13 @@ export default function JokesRoute() {
             <ul>
               {data.jokeListItems.map(i => (
                 <li key={i.id}>
-                  <Link to={i.id}>{i.name}</Link>
+                  <Link to={i.id} prefetch="intent">
+                    {i.name}
+                  </Link>
                 </li>
               ))}
             </ul>
-            <Link to="new" className="button">
+            <Link to="new" className="button" prefetch="intent">
               Add your own
             </Link>
           </div>
